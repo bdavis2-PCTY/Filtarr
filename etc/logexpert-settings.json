@@ -1,0 +1,233 @@
+﻿{
+  "Preferences": {
+    "HighlightGroupList": [
+      {
+        "GroupName": "Filtarr (Serilog)",
+        "HighlightEntryList": [
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": true,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "White",
+            "BackgroundColor": "Firebrick",
+            "SearchText": "\\[(FTL|ERR)\\]",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "\\[(FTL|ERR)\\]",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": true,
+            "NoBackground": false
+          },
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": false,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "Black",
+            "BackgroundColor": "Gold",
+            "SearchText": "\\[WRN\\]",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "\\[WRN\\]",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": true,
+            "NoBackground": false
+          },
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": false,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "Firebrick",
+            "BackgroundColor": "White",
+            "SearchText": "^\\s*(---> )?[\\w.`+<>]+(Exception|Error)(\\s*\\(\\d+\\))?:",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "^\\s*(---> )?[\\w.`+<>]+(Exception|Error)(\\s*\\(\\d+\\))?:",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": true,
+            "NoBackground": false
+          },
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": false,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "DarkRed",
+            "BackgroundColor": "White",
+            "SearchText": "^\\s*--- End of inner exception stack trace ---",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "^\\s*--- End of inner exception stack trace ---",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": false,
+            "NoBackground": false
+          },
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": false,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "Brown",
+            "BackgroundColor": "White",
+            "SearchText": "^\\s+at ",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "^\\s+at ",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": false,
+            "NoBackground": false
+          },
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": false,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "Gray",
+            "BackgroundColor": "White",
+            "SearchText": "\\[DBG\\]",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "\\[DBG\\]",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": false,
+            "NoBackground": false
+          },
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": false,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "DarkGray",
+            "BackgroundColor": "White",
+            "SearchText": "\\[VRB\\]",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "\\[VRB\\]",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": false,
+            "NoBackground": false
+          },
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": false,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "Black",
+            "BackgroundColor": "White",
+            "SearchText": "\\[INF\\]",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "\\[INF\\]",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": false,
+            "NoBackground": false
+          },
+          {
+            "IsStopTail": false,
+            "IsSetBookmark": false,
+            "IsRegex": true,
+            "IsCaseSensitive": true,
+            "ForegroundColor": "DarkGreen",
+            "BackgroundColor": "White",
+            "SearchText": "Application started|Now listening on",
+            "IsLedSwitch": false,
+            "ActionEntry": {
+              "ActionParam": null,
+              "PluginName": null
+            },
+            "IsActionEntry": false,
+            "BookmarkComment": null,
+            "Regex": {
+              "Pattern": "Application started|Now listening on",
+              "Options": 0
+            },
+            "IsWordMatch": false,
+            "IsSearchHit": false,
+            "IsBold": true,
+            "NoBackground": false
+          }
+        ]
+      }
+    ],
+    "HighlightMaskList": [
+      {
+        "HighlightGroupName": "Filtarr (Serilog)",
+        "Mask": "2*.log"
+      }
+    ]
+  }
+}

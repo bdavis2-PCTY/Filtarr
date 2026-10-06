@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="src/Filtarr.Api.Tests/Filtarr.Api.Tests.csproj" />
+  </Folder>
+  <Project Path="src/Filtarr.Api/Filtarr.Api.csproj" />
+</Solution>

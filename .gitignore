@@ -1,0 +1,11 @@
+bin/
+obj/
+node_modules/
+*.db
+*.db-shm
+*.db-wal
+src/Filtarr.Api/wwwroot/
+.vs/
+appsettings.*.json
+.data/
+/frontend/package-lock.json
