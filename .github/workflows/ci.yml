@@ -1,0 +1,59 @@
+name: CI
+
+# Validates that the API and the UI build (and that the API tests pass) for every pull request into master or develop.
+# Both jobs run on every PR (no path filters) so they can be made required status checks without ever being "missing".
+on:
+  pull_request:
+    branches: [master, develop]
+
+# A new push to the same PR cancels the run it supersedes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API build & test
+    # Windows, like the environment the app is developed and run on; the tests use SQLite and %APPDATA%-style paths.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Filtarr.slnx
+
+      - name: Build
+        run: dotnet build Filtarr.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Filtarr.slnx --configuration Release --no-build --verbosity normal
+
+  ui:
+    name: UI build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Installs exactly what package-lock.json says (and fails if it is out of sync with package.json).
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # Type-checks with tsc and bundles with Vite (output goes to src/Filtarr.Api/wwwroot, which is git-ignored).
+      - name: Build
+        run: npm run build
