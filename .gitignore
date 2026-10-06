@@ -8,4 +8,3 @@ src/Filtarr.Api/wwwroot/
 .vs/
 appsettings.*.json
 .data/
-/frontend/package-lock.json
