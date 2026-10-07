@@ -20,6 +20,14 @@ cd frontend && npm install && npm run dev       # UI dev server on :5173 (proxie
 cd frontend && npm run build                    # type-checks (tsc) and builds into wwwroot
 ```
 
+```powershell
+.\scripts\Build-Release.ps1 [-SmokeTest] [-SelfContained -Runtime win-x64]   # tests + UI build + publish API and UI into .\output
+```
+
+The release script empties `output/` (git-ignored) first, never ships `appsettings.*.json` other than `appsettings.json` (the csproj excludes them from publish, and
+the script re-checks), and refuses to run `npm ci` while something (e.g. `npm run dev`) is using `frontend/node_modules`.
+Windows PowerShell 5.1 must keep working: no `??`, ternaries or `&&`, ASCII-only source, and no `$PSScriptRoot` in `param()` defaults.
+
 A running API locks `bin/`; to build or test while one is running use `--artifacts-path <other dir>`.
 
 ## Configuration and secrets

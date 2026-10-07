@@ -8,3 +8,6 @@ src/Filtarr.Api/wwwroot/
 .vs/
 appsettings.*.json
 .data/
+
+# Release output (scripts/Build-Release.ps1)
+/output/

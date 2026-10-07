@@ -5,9 +5,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <!-- appsettings.Development.json / appsettings.Production.json are git-ignored because they can hold real keys: never copy them into a publish. -->
+    <Content Update="appsettings.*.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.13" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="appsettings.Release.json">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 </Project>
 
