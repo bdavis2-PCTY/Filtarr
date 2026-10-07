@@ -1,0 +1,52 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Never run two deploys at once, and never cancel one halfway through.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, windows]
+    environment: production
+    env:
+      SITE_NAME: Filtarr
+      SITE_DIR: C:\inetpub\filtarr.daviscode.com
+      STAGE_DIR: ${{ runner.temp }}\filtarr-stage
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build, test and publish
+        shell: powershell
+        run: .\scripts\Build-Release.ps1 -OutputDir "$env:STAGE_DIR"
+
+      - name: Deploy to IIS
+        shell: powershell
+        run: |
+          Import-Module WebAdministration
+          $pool = (Get-Item "IIS:\Sites\$env:SITE_NAME").applicationPool
+
+          # app_offline.htm makes IIS release file locks and serve a maintenance page.
+          Set-Content "$env:SITE_DIR\app_offline.htm" "Updating, back in a moment."
+          Start-Sleep -Seconds 3
+
+          # /MIR makes the folder an exact copy; app_offline.htm and any data folders are excluded from deletion.
+          robocopy "$env:STAGE_DIR" "$env:SITE_DIR" /MIR /XF app_offline.htm /XD data logs /NFL /NDL /NP
+          if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }
+
+          Remove-Item "$env:SITE_DIR\app_offline.htm"
+          Restart-WebAppPool $pool
+
+      - name: Smoke test
+        shell: powershell
+        run: |
+          Start-Sleep -Seconds 5
+          Invoke-WebRequest "http://localhost:5080/" -UseBasicParsing | Out-Null

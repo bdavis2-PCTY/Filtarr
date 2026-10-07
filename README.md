@@ -22,6 +22,21 @@ src/Filtarr.Api.Tests/   xUnit tests; services are tested against hand-written f
 
 Run the tests with `dotnet test Filtarr.slnx`.
 
+## Build a release
+
+```powershell
+.\scripts\Build-Release.ps1
+```
+
+Runs the tests, builds the UI, and publishes the API (which serves the UI) into `output\` (cleared first; git-ignored), then verifies it and
+writes `release-info.json` (build time, git commit). Run the result with `dotnet Filtarr.Api.dll` (or `Filtarr.Api.exe`) from that folder; it
+needs the ASP.NET Core 10 runtime unless built with `-SelfContained`.
+
+Options: `-OutputDir <path>`, `-Runtime <rid>` (e.g. `win-x64`), `-SelfContained`, `-SkipTests`, `-SkipInstall`, `-CleanInstall` (force `npm ci`),
+`-SmokeTest` (starts the release on a free port with a throw-away data folder and checks the API and UI answer). `appsettings.*.json` files
+other than `appsettings.json` are never included, because they can hold real keys. If scripts are blocked:
+`powershell -ExecutionPolicy Bypass -File .\scripts\Build-Release.ps1`.
+
 ## Run (development)
 
 ```bash
