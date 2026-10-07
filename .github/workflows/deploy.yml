@@ -1,5 +1,6 @@
 name: Deploy
 
+# Builds master, publishes a GitHub release with the build attached, then deploys it to IIS on the self-hosted runner.
 on:
   push:
     branches: [master]
@@ -10,8 +11,9 @@ concurrency:
   group: deploy
   cancel-in-progress: false
 
+# write: needed to create the tag and release.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   deploy:
@@ -20,13 +22,34 @@ jobs:
     env:
       SITE_NAME: Filtarr
       SITE_DIR: C:\inetpub\filtarr.daviscode.com
-      STAGE_DIR: ${{ runner.temp }}\filtarr-stage
     steps:
+      # The runner context isn't available in job-level env, so the staging folder is exported from a step.
+      - name: Set staging folder
+        shell: powershell
+        run: Add-Content $env:GITHUB_ENV "STAGE_DIR=$env:RUNNER_TEMP\filtarr-stage"
+
+      # Full history so the generated release notes can compare against the previous tag.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Build, test and publish
         shell: powershell
         run: .\scripts\Build-Release.ps1 -OutputDir "$env:STAGE_DIR"
+
+      #- name: Create GitHub release
+      # shell: powershell
+      # env:
+      #   GH_TOKEN: ${{ github.token }}
+      # run: |
+      #   $tag = "v$(Get-Date -Format 'yyyy.MM.dd').${{ github.run_number }}"
+      #   $zip = Join-Path $env:RUNNER_TEMP "Filtarr-$tag.zip"
+      #
+      #   Compress-Archive -Path "$env:STAGE_DIR\*" -DestinationPath $zip -Force
+      #
+      #   # --target pins the tag to the exact commit that was built; --generate-notes lists the merged PRs since the last release.
+      #   gh release create $tag $zip --target "${{ github.sha }}" --title $tag --generate-notes
+      #   if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
 
       - name: Deploy to IIS
         shell: powershell
