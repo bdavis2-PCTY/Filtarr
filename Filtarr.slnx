@@ -1,7 +1,11 @@
 <Solution>
-  <Folder Name="/.github/">
-    <File Path=".github/workflows/ci.yml" />
-    <File Path=".github/workflows/deploy.yml" />
+  <Folder Name="/scripts/">
+    <File Path="scripts/Build-Installer.ps1" />
+    <File Path="scripts/Build-Release.ps1" />
+    <File Path="scripts/Build-Service.ps1" />
+  </Folder>
+  <Folder Name="/installer/">
+    <File Path="installer/Filtarr.iss" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
