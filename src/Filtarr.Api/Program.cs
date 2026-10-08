@@ -21,6 +21,8 @@ var options = builder.Configuration.GetSection(FiltarrOptions.Section).Get<Filta
 var dataDir = options.ResolveDataDirectory();
 Directory.CreateDirectory(dataDir);
 builder.WebHost.UseUrls($"http://*:{options.Port}");
+// Lets the same executable run as a Windows service (see scripts/Install-Service.ps1); a no-op when started from a console.
+builder.Host.UseWindowsService(o => o.ServiceName = "Filtarr");
 
 // Levels come from the "Serilog" config section; sinks are fixed: console + one file per day named after the date (yyyyMMdd.log).
 var logDir = options.ResolveLogDirectory();

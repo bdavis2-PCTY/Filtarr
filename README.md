@@ -37,6 +37,33 @@ Options: `-OutputDir <path>`, `-Runtime <rid>` (e.g. `win-x64`), `-SelfContained
 other than `appsettings.json` are never included, because they can hold real keys. If scripts are blocked:
 `powershell -ExecutionPolicy Bypass -File .\scripts\Build-Release.ps1`.
 
+## Windows installer
+
+```powershell
+.\scripts\Build-Installer.ps1 -Version 1.0.0      # needs Inno Setup 6: winget install JRSoftware.InnoSetup
+```
+
+Produces `installer\output\Filtarr-Setup-<version>.exe` (self-contained, so the target machine needs no .NET). The wizard asks for the install
+folder, whether Filtarr runs as a Windows service (default) or is started manually from the Start menu, and the web UI port, and offers a
+desktop shortcut, start at sign-in (manual mode) and a Windows Firewall rule (off by default: Filtarr has no login). Running the installer
+again upgrades in place and keeps `appsettings.json`; uninstalling removes the service and firewall rule but keeps your data folder
+(`%ProgramData%\Filtarr` for the service, `%AppData%\Filtarr` for manual). Unattended:
+`Filtarr-Setup-1.0.0.exe /VERYSILENT /SUPPRESSMSGBOXES /DIR="C:\Filtarr" /PORT=5080 /SERVICE=1 /TASKS="firewall"`.
+The script is `installer\Filtarr.iss`.
+
+## Run as a Windows service
+
+Filtarr hosts its own web server (Kestrel) on `Filtarr:Port` from `appsettings.json`, like Sonarr/Radarr; it does not need IIS.
+Start `Filtarr.Api.exe` from a console, or register it once as a service that starts with the machine (elevated PowerShell):
+
+```powershell
+.\scripts\Install-Service.ps1 -InstallDir C:\Filtarr -DataDirectory C:\ProgramData\Filtarr -Port 5080
+```
+
+The script creates the `Filtarr` service (NetworkService by default), points it at the data directory, opens the firewall port and starts it.
+Change the port in `appsettings.json` and restart the service. To update, stop the service, copy a new release over `InstallDir` (keep
+your `appsettings.json`) and start it again.
+
 ## Run (development)
 
 ```bash
