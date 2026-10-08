@@ -20,8 +20,8 @@ jobs:
     runs-on: [self-hosted, windows]
     environment: production
     env:
-      SITE_NAME: Filtarr
-      SITE_DIR: C:\inetpub\wwwroot\filtarr.daviscode.com
+      SERVICE_NAME: Filtarr
+      INSTALL_DIR: C:\Program Files\Filtarr
     steps:
       # The runner context isn't available in job-level env, so the staging folder is exported from a step.
       - name: Set staging folder
@@ -51,22 +51,33 @@ jobs:
       #   gh release create $tag $zip --target "${{ github.sha }}" --title $tag --generate-notes
       #   if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
 
-      - name: Deploy to IIS
+      # Filtarr runs its own web server as a Windows service (scripts\Install-Service.ps1 registers it once).
+      - name: Deploy service
         shell: powershell
         run: |
-          # app_offline.htm makes the ASP.NET Core module stop the app (releasing file locks) and serve a maintenance page;
-          # removing it starts the app again, so no app pool restart (and no IIS admin rights for the runner) is needed.
-          Set-Content "$env:SITE_DIR\app_offline.htm" "Updating, back in a moment."
-          Start-Sleep -Seconds 3
+          if (-not (Get-Service $env:SERVICE_NAME -ErrorAction SilentlyContinue)) { throw "Service '$env:SERVICE_NAME' is not installed; run scripts\Install-Service.ps1 first." }
 
-          # /MIR makes the folder an exact copy; app_offline.htm and any data folders are excluded from deletion.
-          robocopy "$env:STAGE_DIR" "$env:SITE_DIR" /MIR /XF app_offline.htm /XD data logs /NFL /NDL /NP
+          # Stopping the service releases the file locks on the executable and DLLs.
+          Stop-Service $env:SERVICE_NAME
+
+          # /MIR makes the folder an exact copy. appsettings.json is excluded so the port you set on the server survives
+          # deploys (it is only copied the first time); the database and logs live in the data directory, outside this folder.
+          robocopy "$env:STAGE_DIR" "$env:INSTALL_DIR" /MIR /XF appsettings.json /NFL /NDL /NP
           if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }
+          if (-not (Test-Path "$env:INSTALL_DIR\appsettings.json")) { Copy-Item "$env:STAGE_DIR\appsettings.json" "$env:INSTALL_DIR\appsettings.json" }
 
-          Remove-Item "$env:SITE_DIR\app_offline.htm"
+          Start-Service $env:SERVICE_NAME
+
+          # Robocopy exits 0-7 on success (1 = files copied), but the runner fails the step on any non-zero $LASTEXITCODE.
+          $global:LASTEXITCODE = 0
 
       - name: Smoke test
         shell: powershell
         run: |
-          Start-Sleep -Seconds 5
-          Invoke-WebRequest "http://localhost:5080/" -UseBasicParsing | Out-Null
+          # Read the port from the deployed appsettings.json so this follows whatever the server is configured with.
+          $port = (Get-Content "$env:INSTALL_DIR\appsettings.json" -Raw | ConvertFrom-Json).Filtarr.Port
+          $deadline = (Get-Date).AddSeconds(30)
+          while ($true) {
+              try { Invoke-WebRequest "http://localhost:$port/" -UseBasicParsing | Out-Null; break }
+              catch { if ((Get-Date) -gt $deadline) { throw }; Start-Sleep -Seconds 2 }
+          }
