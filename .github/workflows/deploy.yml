@@ -21,7 +21,7 @@ jobs:
     environment: production
     env:
       SITE_NAME: Filtarr
-      SITE_DIR: C:\inetpub\filtarr.daviscode.com
+      SITE_DIR: C:\inetpub\wwwroot\filtarr.daviscode.com
     steps:
       # The runner context isn't available in job-level env, so the staging folder is exported from a step.
       - name: Set staging folder
@@ -54,10 +54,8 @@ jobs:
       - name: Deploy to IIS
         shell: powershell
         run: |
-          Import-Module WebAdministration
-          $pool = (Get-Item "IIS:\Sites\$env:SITE_NAME").applicationPool
-
-          # app_offline.htm makes IIS release file locks and serve a maintenance page.
+          # app_offline.htm makes the ASP.NET Core module stop the app (releasing file locks) and serve a maintenance page;
+          # removing it starts the app again, so no app pool restart (and no IIS admin rights for the runner) is needed.
           Set-Content "$env:SITE_DIR\app_offline.htm" "Updating, back in a moment."
           Start-Sleep -Seconds 3
 
@@ -66,7 +64,6 @@ jobs:
           if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }
 
           Remove-Item "$env:SITE_DIR\app_offline.htm"
-          Restart-WebAppPool $pool
 
       - name: Smoke test
         shell: powershell
