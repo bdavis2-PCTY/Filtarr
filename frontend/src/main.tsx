@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles.css";
 import "./series.css";
+import "./mobile.css";
 
 // The pages remember and restore their own scroll position (see pageMemory.ts). The browser's automatic restoration runs at the
 // wrong moment for a page that is rebuilt on every route change, and would override ours.

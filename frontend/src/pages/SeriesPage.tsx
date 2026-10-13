@@ -216,7 +216,7 @@ function RuleRunPanel({
       {r && r.monitored > 0 && (
         <>
           <p className="hint">Sonarr was asked to search for the ones without a file (if that is turned on in Settings).</p>
-          <table>
+          <table className="stack">
             <thead>
               <tr>
                 <th>Episode</th>
@@ -227,13 +227,13 @@ function RuleRunPanel({
             <tbody>
               {(r.newlyMonitored ?? []).map((m) => (
                 <tr key={m.episodeId}>
-                  <td>{code(m.season, m.number)}</td>
-                  <td>
+                  <td data-label="Episode">{code(m.season, m.number)}</td>
+                  <td data-label="Title">
                     <a href={imdbEpisodeUrl(m, seriesImdbId) ?? undefined} target="_blank" rel="noreferrer" title="Open on IMDb">
                       {m.title || "(untitled)"}
                     </a>
                   </td>
-                  <td>{fmtDate(m.airDate)}</td>
+                  <td data-label="Aired">{fmtDate(m.airDate)}</td>
                 </tr>
               ))}
             </tbody>
@@ -287,7 +287,7 @@ function TestPanel({
             ).
           </p>
           {r.matches.length > 0 && (
-            <table>
+            <table className="stack">
               <thead>
                 <tr>
                   <th>Episode</th>
@@ -301,8 +301,8 @@ function TestPanel({
               <tbody>
                 {r.matches.map((m) => (
                   <tr key={m.episodeId} className={skipReason(m) ? "dim" : ""}>
-                    <td>{code(m.season, m.number)}</td>
-                    <td>
+                    <td data-label="Episode">{code(m.season, m.number)}</td>
+                    <td data-label="Title">
                       <a
                         href={imdbEpisodeUrl(m, seriesImdbId) ?? undefined}
                         target="_blank"
@@ -312,14 +312,14 @@ function TestPanel({
                         {m.title || "(untitled)"}
                       </a>
                     </td>
-                    <td>{fmtDate(m.airDate)}</td>
+                    <td data-label="Aired">{fmtDate(m.airDate)}</td>
                     {showRatings && (
-                      <td>{m.rating !== null ? m.rating.toFixed(1) : "—"}</td>
+                      <td data-label="Rating">{m.rating !== null ? m.rating.toFixed(1) : "—"}</td>
                     )}
-                    <td className="ellipsis" title={m.filter}>
+                    <td className="ellipsis" data-label="Matched by" title={m.filter}>
                       {m.filter}
                     </td>
-                    <td>
+                    <td data-label="Wouldâ€¦">
                       {skipReason(m) ??
                         (m.hasFile
                           ? "monitor (has file)"

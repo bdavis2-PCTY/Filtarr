@@ -9,7 +9,7 @@ export default function HistoryPage() {
   }, []);
   if (runs.length === 0) return <p className="empty">No sync runs yet.</p>;
   return (
-    <table>
+    <table className="stack">
       <thead>
         <tr>
           <th>Started</th>
@@ -29,13 +29,13 @@ export default function HistoryPage() {
               className="clickable"
               onClick={() => setOpen(open === r.id ? null : r.id)}
             >
-              <td>{new Date(r.startedAt + "Z").toLocaleString()}</td>
-              <td>{r.trigger}</td>
-              <td>{r.seriesScanned}</td>
-              <td>{r.episodesMatched}</td>
-              <td>{r.episodesMonitored}</td>
-              <td>{r.episodesSkipped}</td>
-              <td className={r.error ? "error" : ""}>{r.error ?? "OK"}</td>
+              <td data-label="Started">{new Date(r.startedAt + "Z").toLocaleString()}</td>
+              <td data-label="Trigger">{r.trigger}</td>
+              <td data-label="Series">{r.seriesScanned}</td>
+              <td data-label="Matched">{r.episodesMatched}</td>
+              <td data-label="Newly monitored">{r.episodesMonitored}</td>
+              <td data-label="Skipped">{r.episodesSkipped}</td>
+              <td data-label="Result" className={r.error ? "error" : ""}>{r.error ?? "OK"}</td>
             </tr>
             {open === r.id && r.items.length > 0 && (
               <tr key={`${r.id}d`}>

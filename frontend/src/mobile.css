@@ -1,0 +1,192 @@
+/* Small-screen layout. Loaded after styles.css and series.css so these rules win at equal specificity. */
+
+/* Touch devices: comfortable tap targets, whatever the width. */
+@media (pointer: coarse) {
+  button,
+  input:not([type="checkbox"]),
+  select {
+    min-height: 40px;
+  }
+  input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+  button.icon-only {
+    min-width: 40px;
+  }
+  nav a {
+    padding-block: 10px;
+  }
+}
+
+@media (max-width: 720px) {
+  .app {
+    padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
+  }
+
+  /* Title on its own line, tabs scroll sideways underneath instead of wrapping into a pile. */
+  header {
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding: 12px 0 8px;
+    margin-bottom: 12px;
+  }
+  nav {
+    order: 2;
+    flex: 1 0 100%;
+    overflow-x: auto;
+    gap: 2px;
+    margin-inline: -12px;
+    padding-inline: 12px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  nav::-webkit-scrollbar {
+    display: none;
+  }
+  nav a {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  /* 16px keeps iOS from zooming the page when a field is focused. */
+  input,
+  select {
+    font-size: 16px;
+  }
+
+  /* Rows of controls: each field takes the full width, buttons wrap underneath. */
+  .row select,
+  .row input:not([type="checkbox"]) {
+    flex: 1 1 100%;
+  }
+  .row .spacer {
+    display: none;
+  }
+  /* A card's header row (filter name, badges, actions): the name takes the first line, the buttons share the next. */
+  .card > .row:first-child .spacer {
+    display: block;
+    flex: 1 1 100%;
+    height: 0;
+    margin-top: -4px;
+  }
+  .card > .row:first-child > button {
+    flex: 1 1 auto;
+  }
+  .row.condition {
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  /* The remove button sits beside the value field instead of on a line of its own. */
+  .row.condition > input:not([type="checkbox"]) {
+    flex: 1 1 0;
+  }
+  .row.condition .icon-only {
+    margin-left: auto;
+  }
+  .card {
+    padding: 8px 12px;
+  }
+  .form {
+    padding: 12px;
+  }
+  .empty {
+    padding: 24px 8px;
+  }
+
+  /* Search results: the action button drops under the title instead of squeezing it. */
+  .result {
+    flex-wrap: wrap;
+  }
+  .result-main {
+    flex: 1 1 100%;
+  }
+  .result-actions {
+    margin-left: 0;
+    max-width: none;
+    width: 100%;
+    text-align: left;
+  }
+  .poster {
+    width: 48px;
+    height: 72px;
+  }
+
+  /* Series page. */
+  .hero-inner {
+    padding: 12px;
+    gap: 12px;
+  }
+  .hero-title {
+    font-size: 22px;
+  }
+  .hero-years {
+    font-size: 16px;
+  }
+  .hero-plot {
+    max-width: none;
+  }
+  .facts {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .facts dt {
+    margin-top: 8px;
+  }
+  .menu {
+    max-width: calc(100vw - 24px);
+  }
+
+  /* Tables become one card per row, each cell labelled from its data-label. */
+  table.stack,
+  table.stack tbody,
+  table.stack tr,
+  table.stack td {
+    display: block;
+  }
+  table.stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+  table.stack tr {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 10px 0;
+    padding: 4px 12px;
+  }
+  table.stack td {
+    position: relative;
+    padding: 6px 0 6px 40%;
+    min-height: 1.45em;
+    border-bottom: 1px solid var(--border);
+    overflow-wrap: anywhere;
+  }
+  table.stack td:last-child {
+    border-bottom: 0;
+  }
+  table.stack td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 36%;
+    color: var(--muted);
+  }
+  table.stack td.ellipsis {
+    max-width: none;
+    white-space: normal;
+  }
+  /* The expanded list under a history row spans the whole card. */
+  table.stack td[colspan] {
+    padding-left: 0;
+  }
+  table.stack td[colspan]::before {
+    content: none;
+  }
+}
