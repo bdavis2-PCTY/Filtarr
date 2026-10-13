@@ -13,6 +13,10 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="src/Filtarr.Api.Tests/Filtarr.Api.Tests.csproj" />
+    <Project Path="src/Filtarr.Core.Tests/Filtarr.Core.Tests.csproj" />
+    <Project Path="src/Filtarr.Data.Tests/Filtarr.Data.Tests.csproj" />
   </Folder>
   <Project Path="src/Filtarr.Api/Filtarr.Api.csproj" />
+  <Project Path="src/Filtarr.Core/Filtarr.Core.csproj" />
+  <Project Path="src/Filtarr.Data/Filtarr.Data.csproj" />
 </Solution>
