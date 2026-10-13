@@ -20,11 +20,7 @@ public class FiltarrOptions
     /// </summary>
     public string LogDirectory { get; set; } = "";
 
-    /// <summary>Base address of the OMDb API (the key is set on the Settings page).</summary>
-    public string OmdbUrl { get; set; } = "https://www.omdbapi.com/";
-
-    /// <summary>Base URL of IMDb's search-suggestion endpoint used by the series search.</summary>
-    public string ImdbSuggestionUrl { get; set; } = "https://v3.sg.media-imdb.com/suggestion";
+    // OmdbUrl and ImdbSuggestionUrl, in the same "Filtarr" section, are Filtarr.Core.Configuration.ExternalApiOptions.
 
     public string ResolveLogDirectory()
     {

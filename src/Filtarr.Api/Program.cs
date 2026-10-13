@@ -1,8 +1,8 @@
 using Filtarr.Api;
-using Filtarr.Api.Data;
-using Filtarr.Api.Models;
-using Filtarr.Api.Services;
-using Microsoft.EntityFrameworkCore;
+using Filtarr.Api.Workers;
+using Filtarr.Core;
+using Filtarr.Core.Configuration;
+using Filtarr.Core.Services.Interfaces;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -21,6 +21,8 @@ var options = builder.Configuration.GetSection(FiltarrOptions.Section).Get<Filta
 var dataDir = options.ResolveDataDirectory();
 Directory.CreateDirectory(dataDir);
 builder.WebHost.UseUrls($"http://*:{options.Port}");
+// Lets the same executable run as a Windows service (see scripts/Install-Service.ps1); a no-op when started from a console.
+builder.Host.UseWindowsService(o => o.ServiceName = "Filtarr");
 
 // Levels come from the "Serilog" config section; sinks are fixed: console + one file per day named after the date (yyyyMMdd.log).
 var logDir = options.ResolveLogDirectory();
@@ -37,49 +39,21 @@ builder.Host.UseSerilog((ctx, services, cfg) => cfg
 
 builder.Services.AddSingleton(options);
 builder.Services.AddSingleton(levelSwitch);
-builder.Services.AddDbContext<AppDb>(o => o.UseSqlite($"Data Source={Path.Combine(dataDir, "filtarr.db")}"));
-builder.Services.AddMemoryCache();
-builder.Services.AddHttpClient("sonarr");
-builder.Services.AddHttpClient("imdb", c => { c.Timeout = TimeSpan.FromSeconds(10); c.DefaultRequestHeaders.UserAgent.ParseAdd("Filtarr"); });
-// Short timeout + short-lived idle connections: OMDb drops idle keep-alive connections, and reusing a dead one hangs until the timeout.
-builder.Services.AddHttpClient("omdb", c => c.Timeout = TimeSpan.FromSeconds(10))
-    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
-    {
-        PooledConnectionIdleTimeout = TimeSpan.FromSeconds(10),
-        PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-    });
-builder.Services.AddScoped<IOmdbClient, OmdbClient>();
-builder.Services.AddScoped<IEpisodeRatingService, EpisodeRatingService>();
-builder.Services.AddScoped<IImdbClient, ImdbClient>();
-builder.Services.AddScoped<ISeriesCatalog, SeriesCatalog>();
-builder.Services.AddScoped<ISeriesDetailsService, SeriesDetailsService>();
-builder.Services.AddScoped<ISeriesAdder, SeriesAdder>();
-builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<SyncGate>();
-builder.Services.AddSingleton<IFilterEngine, FilterEngine>();
-builder.Services.AddScoped<ISonarrClient, SonarrClient>();
-builder.Services.AddScoped<ISettingsService, SettingsService>();
-builder.Services.AddScoped<ISettingsUpdater, SettingsUpdater>();
-builder.Services.AddScoped<IFilterService, FilterService>();
-builder.Services.AddScoped<IQuickFilterService, QuickFilterService>();
-builder.Services.AddScoped<ISyncRunStore, SyncRunStore>();
-builder.Services.AddScoped<IMonitoredEpisodeStore, MonitoredEpisodeStore>();
-builder.Services.AddScoped<IMonitoredHistoryService, MonitoredHistoryService>();
-builder.Services.AddScoped<ISyncService, SyncService>();
+builder.Services.AddFiltarrCore(
+    Path.Combine(dataDir, "filtarr.db"),
+    builder.Configuration.GetSection(FiltarrOptions.Section).Get<ExternalApiOptions>() ?? new ExternalApiOptions());
 builder.Services.AddHostedService<SyncWorker>();
 builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 app.Logger.LogInformation("Filtarr data directory: {Dir}; logs: {LogDir}; port: {Port}", dataDir, logDir, options.Port);
 
+app.Services.InitializeFiltarr();
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDb>();
-    db.Database.EnsureCreated();
-    SchemaUpgrader.Upgrade(db, app.Logger);
-    LegacyConfigImport.Run(db, app.Configuration, app.Logger);
     // A level saved in the UI wins over the configured one.
-    if (LogLevels.TryParse(db.Settings.AsNoTracking().Select(s => s.LogLevel).FirstOrDefault(), out var savedLevel))
+    var saved = await scope.ServiceProvider.GetRequiredService<ISettingsService>().GetAsync();
+    if (LogLevels.TryParse(saved.LogLevel, out var savedLevel))
         levelSwitch.MinimumLevel = savedLevel;
 }
 

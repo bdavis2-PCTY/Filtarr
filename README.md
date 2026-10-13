@@ -11,13 +11,25 @@ automatically set to monitored in Sonarr (and optionally searched for).
 ```
 Filtarr.slnx
 src/Filtarr.Api/
-  Controllers/   MVC API controllers (Settings, Metadata, Filters, Sync) - thin, delegate to services
-  Services/      Interfaces.cs (ISonarrClient, IFilterEngine, ISettingsService, IFilterService, ISyncRunStore, ISyncService)
-                 + implementations; registered in Program.cs
-  Data/          EF Core DbContext (SQLite)
-  Models/        Entities and DTOs
+  Controllers/   MVC API controllers (Settings, Metadata, Filters, Series, Sync) - thin, delegate to Core services
+  Workers/       SyncWorker (background auto-sync)
+  Program.cs     Host setup; AddFiltarrCore(...) registers everything below
+src/Filtarr.Core/
+  Services/      Business logic (filters, settings, sync, ratings, series details...); Services/Interfaces/ holds the contracts
+  Clients/       Sonarr, OMDb and IMDb clients (+ Interfaces/, Models/ for their wire types)
+  Catalogs/      Series catalog (IMDb search + Sonarr library + filter counts)
+  Filtering/     Filter engine and the list of filter fields
+  Models/        API-safe models returned to / accepted from the UI (database entities never leave Core)
+  Mapping/       Entity <-> model conversion;  Exceptions/, Synchronization/, Configuration/
+src/Filtarr.Data/
+  Models/        Database entities
+  Repositories/  One internal implementation per table; Repositories/Interfaces/ holds the public interfaces
+  Migrations/    SchemaUpgrader and the legacy configuration import
+  AppDb.cs       EF Core DbContext (SQLite), internal; AddFiltarrData(...) registers everything for dependency injection
 frontend/        React UI (builds into src/Filtarr.Api/wwwroot)
-src/Filtarr.Api.Tests/   xUnit tests; services are tested against hand-written fakes of their interfaces
+src/Filtarr.Api.Tests/    xUnit tests of the API host (options, controller boundaries)
+src/Filtarr.Core.Tests/   xUnit tests; services are tested against hand-written fakes of their interfaces
+src/Filtarr.Data.Tests/   xUnit tests of the repositories and schema upgrades against in-memory SQLite
 ```
 
 Run the tests with `dotnet test Filtarr.slnx`.
@@ -36,6 +48,33 @@ Options: `-OutputDir <path>`, `-Runtime <rid>` (e.g. `win-x64`), `-SelfContained
 `-SmokeTest` (starts the release on a free port with a throw-away data folder and checks the API and UI answer). `appsettings.*.json` files
 other than `appsettings.json` are never included, because they can hold real keys. If scripts are blocked:
 `powershell -ExecutionPolicy Bypass -File .\scripts\Build-Release.ps1`.
+
+## Windows installer
+
+```powershell
+.\scripts\Build-Installer.ps1 -Version 1.0.0      # needs Inno Setup 6: winget install JRSoftware.InnoSetup
+```
+
+Produces `installer\output\Filtarr-Setup-<version>.exe` (self-contained, so the target machine needs no .NET). The wizard asks for the install
+folder, whether Filtarr runs as a Windows service (default) or is started manually from the Start menu, and the web UI port, and offers a
+desktop shortcut, start at sign-in (manual mode) and a Windows Firewall rule (off by default: Filtarr has no login). Running the installer
+again upgrades in place and keeps `appsettings.json`; uninstalling removes the service and firewall rule but keeps your data folder
+(`%ProgramData%\Filtarr` for the service, `%AppData%\Filtarr` for manual). Unattended:
+`Filtarr-Setup-1.0.0.exe /VERYSILENT /SUPPRESSMSGBOXES /DIR="C:\Filtarr" /PORT=5080 /SERVICE=1 /TASKS="firewall"`.
+The script is `installer\Filtarr.iss`.
+
+## Run as a Windows service
+
+Filtarr hosts its own web server (Kestrel) on `Filtarr:Port` from `appsettings.json`, like Sonarr/Radarr; it does not need IIS.
+Start `Filtarr.Api.exe` from a console, or register it once as a service that starts with the machine (elevated PowerShell):
+
+```powershell
+.\scripts\Install-Service.ps1 -InstallDir C:\Filtarr -DataDirectory C:\ProgramData\Filtarr -Port 5080
+```
+
+The script creates the `Filtarr` service (NetworkService by default), points it at the data directory, opens the firewall port and starts it.
+Change the port in `appsettings.json` and restart the service. To update, stop the service, copy a new release over `InstallDir` (keep
+your `appsettings.json`) and start it again.
 
 ## Run (development)
 

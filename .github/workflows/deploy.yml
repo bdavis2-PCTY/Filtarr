@@ -1,5 +1,6 @@
 name: Deploy
 
+# Builds master, publishes a GitHub release with the build attached, then deploys it to IIS on the self-hosted runner.
 on:
   push:
     branches: [master]
@@ -10,43 +11,73 @@ concurrency:
   group: deploy
   cancel-in-progress: false
 
+# write: needed to create the tag and release.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   deploy:
     runs-on: [self-hosted, windows]
     environment: production
     env:
-      SITE_NAME: Filtarr
-      SITE_DIR: C:\inetpub\filtarr.daviscode.com
-      STAGE_DIR: ${{ runner.temp }}\filtarr-stage
+      SERVICE_NAME: Filtarr
+      INSTALL_DIR: C:\Program Files\Filtarr
     steps:
+      # The runner context isn't available in job-level env, so the staging folder is exported from a step.
+      - name: Set staging folder
+        shell: powershell
+        run: Add-Content $env:GITHUB_ENV "STAGE_DIR=$env:RUNNER_TEMP\filtarr-stage"
+
+      # Full history so the generated release notes can compare against the previous tag.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Build, test and publish
         shell: powershell
         run: .\scripts\Build-Release.ps1 -OutputDir "$env:STAGE_DIR"
 
-      - name: Deploy to IIS
+      #- name: Create GitHub release
+      # shell: powershell
+      # env:
+      #   GH_TOKEN: ${{ github.token }}
+      # run: |
+      #   $tag = "v$(Get-Date -Format 'yyyy.MM.dd').${{ github.run_number }}"
+      #   $zip = Join-Path $env:RUNNER_TEMP "Filtarr-$tag.zip"
+      #
+      #   Compress-Archive -Path "$env:STAGE_DIR\*" -DestinationPath $zip -Force
+      #
+      #   # --target pins the tag to the exact commit that was built; --generate-notes lists the merged PRs since the last release.
+      #   gh release create $tag $zip --target "${{ github.sha }}" --title $tag --generate-notes
+      #   if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
+
+      # Filtarr runs its own web server as a Windows service (scripts\Install-Service.ps1 registers it once).
+      - name: Deploy service
         shell: powershell
         run: |
-          Import-Module WebAdministration
-          $pool = (Get-Item "IIS:\Sites\$env:SITE_NAME").applicationPool
+          if (-not (Get-Service $env:SERVICE_NAME -ErrorAction SilentlyContinue)) { throw "Service '$env:SERVICE_NAME' is not installed; run scripts\Install-Service.ps1 first." }
 
-          # app_offline.htm makes IIS release file locks and serve a maintenance page.
-          Set-Content "$env:SITE_DIR\app_offline.htm" "Updating, back in a moment."
-          Start-Sleep -Seconds 3
+          # Stopping the service releases the file locks on the executable and DLLs.
+          Stop-Service $env:SERVICE_NAME
 
-          # /MIR makes the folder an exact copy; app_offline.htm and any data folders are excluded from deletion.
-          robocopy "$env:STAGE_DIR" "$env:SITE_DIR" /MIR /XF app_offline.htm /XD data logs /NFL /NDL /NP
+          # /MIR makes the folder an exact copy. appsettings.json is excluded so the port you set on the server survives
+          # deploys (it is only copied the first time); the database and logs live in the data directory, outside this folder.
+          robocopy "$env:STAGE_DIR" "$env:INSTALL_DIR" /MIR /XF appsettings.json /NFL /NDL /NP
           if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }
+          if (-not (Test-Path "$env:INSTALL_DIR\appsettings.json")) { Copy-Item "$env:STAGE_DIR\appsettings.json" "$env:INSTALL_DIR\appsettings.json" }
 
-          Remove-Item "$env:SITE_DIR\app_offline.htm"
-          Restart-WebAppPool $pool
+          Start-Service $env:SERVICE_NAME
+
+          # Robocopy exits 0-7 on success (1 = files copied), but the runner fails the step on any non-zero $LASTEXITCODE.
+          $global:LASTEXITCODE = 0
 
       - name: Smoke test
         shell: powershell
         run: |
-          Start-Sleep -Seconds 5
-          Invoke-WebRequest "http://localhost:5080/" -UseBasicParsing | Out-Null
+          # Read the port from the deployed appsettings.json so this follows whatever the server is configured with.
+          $port = (Get-Content "$env:INSTALL_DIR\appsettings.json" -Raw | ConvertFrom-Json).Filtarr.Port
+          $deadline = (Get-Date).AddSeconds(30)
+          while ($true) {
+              try { Invoke-WebRequest "http://localhost:$port/" -UseBasicParsing | Out-Null; break }
+              catch { if ((Get-Date) -gt $deadline) { throw }; Start-Sleep -Seconds 2 }
+          }

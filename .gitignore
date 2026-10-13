@@ -11,3 +11,7 @@ appsettings.*.json
 
 # Release output (scripts/Build-Release.ps1)
 /output/
+
+# Installer (scripts/Build-Installer.ps1)
+/installer/staging/
+/installer/output/

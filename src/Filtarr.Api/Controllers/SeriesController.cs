@@ -1,5 +1,7 @@
-using Filtarr.Api.Models;
-using Filtarr.Api.Services;
+using Filtarr.Core.Catalogs.Interfaces;
+using Filtarr.Core.Exceptions;
+using Filtarr.Core.Models;
+using Filtarr.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Filtarr.Api.Controllers;
@@ -27,7 +29,7 @@ public class SeriesController(ISeriesCatalog catalog, ISeriesDetailsService deta
     [HttpGet("{imdbId}")]
     public async Task<IActionResult> Get(string imdbId, CancellationToken ct)
     {
-        if (!ImdbClient.ImdbIdPattern().IsMatch(imdbId)) return BadRequest(new { error = "Not a valid IMDb id (expected e.g. tt0903747)." });
+        if (!ImdbId.IsValid(imdbId)) return BadRequest(new { error = "Not a valid IMDb id (expected e.g. tt0903747)." });
         var info = await catalog.GetAsync(imdbId, ct);
         return info is null ? NotFound() : Ok(info);
     }
@@ -36,7 +38,7 @@ public class SeriesController(ISeriesCatalog catalog, ISeriesDetailsService deta
     [HttpGet("{imdbId}/details")]
     public async Task<IActionResult> Details(string imdbId, CancellationToken ct)
     {
-        if (!ImdbClient.ImdbIdPattern().IsMatch(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
+        if (!ImdbId.IsValid(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
         var d = await details.GetAsync(imdbId, ct);
         return d is null ? NotFound() : Ok(d);
     }
@@ -45,7 +47,7 @@ public class SeriesController(ISeriesCatalog catalog, ISeriesDetailsService deta
     [HttpGet("{imdbId}/monitored-history")]
     public async Task<IActionResult> MonitoredHistory(string imdbId, CancellationToken ct)
     {
-        if (!ImdbClient.ImdbIdPattern().IsMatch(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
+        if (!ImdbId.IsValid(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
         return Ok(new { count = await history.CountAsync(imdbId, ct) });
     }
 
@@ -56,7 +58,7 @@ public class SeriesController(ISeriesCatalog catalog, ISeriesDetailsService deta
     [HttpDelete("{imdbId}/monitored-history")]
     public async Task<IActionResult> ResetMonitoredHistory(string imdbId, CancellationToken ct)
     {
-        if (!ImdbClient.ImdbIdPattern().IsMatch(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
+        if (!ImdbId.IsValid(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
         return Ok(new { removed = await history.ResetAsync(imdbId, ct) });
     }
 
@@ -67,7 +69,7 @@ public class SeriesController(ISeriesCatalog catalog, ISeriesDetailsService deta
     [HttpPost("{imdbId}/add-to-sonarr")]
     public async Task<IActionResult> AddToSonarr(string imdbId, CancellationToken ct)
     {
-        if (!ImdbClient.ImdbIdPattern().IsMatch(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
+        if (!ImdbId.IsValid(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
         try
         {
             await adder.AddAsync(imdbId, ct);
@@ -88,7 +90,7 @@ public class SeriesController(ISeriesCatalog catalog, ISeriesDetailsService deta
     [HttpPost("{imdbId}/test")]
     public async Task<IActionResult> Test(string imdbId, [FromBody] TestRequest? request, CancellationToken ct)
     {
-        if (!ImdbClient.ImdbIdPattern().IsMatch(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
+        if (!ImdbId.IsValid(imdbId)) return BadRequest(new { error = "Not a valid IMDb id." });
         try { return Ok(await sync.TestSeriesAsync(imdbId, request?.Filters, ct)); }
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException)
         {
@@ -97,4 +99,4 @@ public class SeriesController(ISeriesCatalog catalog, ISeriesDetailsService deta
     }
 }
 
-public record TestRequest(List<Filter>? Filters);
+public record TestRequest(List<FilterModel>? Filters);

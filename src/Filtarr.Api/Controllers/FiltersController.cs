@@ -1,5 +1,6 @@
-using Filtarr.Api.Models;
-using Filtarr.Api.Services;
+using Filtarr.Core.Exceptions;
+using Filtarr.Core.Models;
+using Filtarr.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Filtarr.Api.Controllers;
@@ -9,18 +10,18 @@ namespace Filtarr.Api.Controllers;
 public class FiltersController(IFilterService filters, ISyncService sync) : ControllerBase
 {
     [HttpGet]
-    public async Task<List<Filter>> List(string? imdbId, bool? globalOnly, CancellationToken ct) =>
+    public async Task<List<FilterModel>> List(string? imdbId, bool? globalOnly, CancellationToken ct) =>
         await filters.ListAsync(imdbId, globalOnly == true, ct);
 
     [HttpPost]
-    public async Task<IActionResult> Create(Filter filter, CancellationToken ct)
+    public async Task<IActionResult> Create(FilterModel filter, CancellationToken ct)
     {
         var created = await filters.CreateAsync(filter, ct);
         return Created($"/api/filters/{created.Id}", created);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, Filter filter, CancellationToken ct)
+    public async Task<IActionResult> Update(int id, FilterModel filter, CancellationToken ct)
     {
         var updated = await filters.UpdateAsync(id, filter, ct);
         return updated is null ? NotFound() : Ok(updated);
