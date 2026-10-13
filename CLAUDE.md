@@ -74,6 +74,9 @@ A running API locks `bin/`; to build or test while one is running use `--artifac
 
 - `src/api.ts` is the only place that calls `fetch`; add types and calls there. Hash routing lives in `routes.ts` / `App.tsx` (no router library).
 - Pages remember state for back navigation through `pageMemory.ts`; any non-GET API call marks remembered pages stale.
+- The UI is mobile-friendly: `mobile.css` holds the small-screen rules (nav scrolls sideways, fields stack, 40px touch targets on touch
+  devices). A data table that can get wide gets `className="stack"` and a `data-label` on every `<td>` so it turns into one card per row on
+  phones. Check UI changes at a phone width (375px) as well as desktop.
 - Every `<button>` has an icon (`components/Icon.tsx`, inline SVG, `BusyIcon` for running actions); loading states use skeletons or a spinner,
   never "Loading…" text. Avoid adding dependencies.
 

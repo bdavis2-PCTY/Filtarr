@@ -114,7 +114,7 @@ export default function FilterEditor({
       {f.conditions.map((c, i) => {
         const def = fieldOf(c.field)!;
         return (
-          <div className="row" key={i}>
+          <div className="row condition" key={i}>
             <select
               value={c.field}
               onChange={(e) => changeField(i, e.target.value)}
