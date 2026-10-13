@@ -11,13 +11,25 @@ automatically set to monitored in Sonarr (and optionally searched for).
 ```
 Filtarr.slnx
 src/Filtarr.Api/
-  Controllers/   MVC API controllers (Settings, Metadata, Filters, Sync) - thin, delegate to services
-  Services/      Interfaces.cs (ISonarrClient, IFilterEngine, ISettingsService, IFilterService, ISyncRunStore, ISyncService)
-                 + implementations; registered in Program.cs
-  Data/          EF Core DbContext (SQLite)
-  Models/        Entities and DTOs
+  Controllers/   MVC API controllers (Settings, Metadata, Filters, Series, Sync) - thin, delegate to Core services
+  Workers/       SyncWorker (background auto-sync)
+  Program.cs     Host setup; AddFiltarrCore(...) registers everything below
+src/Filtarr.Core/
+  Services/      Business logic (filters, settings, sync, ratings, series details...); Services/Interfaces/ holds the contracts
+  Clients/       Sonarr, OMDb and IMDb clients (+ Interfaces/, Models/ for their wire types)
+  Catalogs/      Series catalog (IMDb search + Sonarr library + filter counts)
+  Filtering/     Filter engine and the list of filter fields
+  Models/        API-safe models returned to / accepted from the UI (database entities never leave Core)
+  Mapping/       Entity <-> model conversion;  Exceptions/, Synchronization/, Configuration/
+src/Filtarr.Data/
+  Models/        Database entities
+  Repositories/  One internal implementation per table; Repositories/Interfaces/ holds the public interfaces
+  Migrations/    SchemaUpgrader and the legacy configuration import
+  AppDb.cs       EF Core DbContext (SQLite), internal; AddFiltarrData(...) registers everything for dependency injection
 frontend/        React UI (builds into src/Filtarr.Api/wwwroot)
-src/Filtarr.Api.Tests/   xUnit tests; services are tested against hand-written fakes of their interfaces
+src/Filtarr.Api.Tests/    xUnit tests of the API host (options, controller boundaries)
+src/Filtarr.Core.Tests/   xUnit tests; services are tested against hand-written fakes of their interfaces
+src/Filtarr.Data.Tests/   xUnit tests of the repositories and schema upgrades against in-memory SQLite
 ```
 
 Run the tests with `dotnet test Filtarr.slnx`.

@@ -1,5 +1,6 @@
-using Filtarr.Api.Models;
-using Filtarr.Api.Services;
+using Filtarr.Core.Configuration;
+using Filtarr.Core.Models;
+using Filtarr.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Serilog.Core;
 
@@ -8,7 +9,7 @@ namespace Filtarr.Api.Controllers;
 [ApiController]
 [Route("api/settings")]
 public class SettingsController(
-    ISettingsService settings, ISettingsUpdater updater, ISonarrClient sonarr, IOmdbClient omdb,
+    ISettingsService settings, ISettingsUpdater updater, IConnectionTestService connections,
     LoggingLevelSwitch levelSwitch, FiltarrOptions options) : ControllerBase
 {
     [HttpGet]
@@ -43,26 +44,15 @@ public class SettingsController(
     [HttpPost("test-sonarr")]
     public async Task<IActionResult> TestSonarr(SonarrTestRequest request, CancellationToken ct)
     {
-        var url = string.IsNullOrWhiteSpace(request.SonarrUrl) ? null : request.SonarrUrl.Trim();
-        var key = string.IsNullOrWhiteSpace(request.ApiKey) ? null : request.ApiKey.Trim();
-        try { return Ok(new { ok = true, message = $"Connected to {await sonarr.TestAsync(url, key, ct)}" }); }
-        catch (Exception ex) when (!ct.IsCancellationRequested) { return Ok(new { ok = false, message = ex.Message }); }
+        var result = await connections.TestSonarrAsync(request.SonarrUrl, request.ApiKey, ct);
+        return Ok(new { ok = result.Ok, message = result.Message });
     }
 
     /// <summary>The root folders and quality profiles Sonarr offers, for the dropdowns on the Settings page (uses the saved connection).</summary>
     [HttpGet("sonarr-options")]
     public async Task<IActionResult> SonarrOptions(CancellationToken ct)
     {
-        try
-        {
-            var folders = await sonarr.GetRootFoldersAsync(ct);
-            var profiles = await sonarr.GetQualityProfilesAsync(ct);
-            return Ok(new
-            {
-                RootFolders = folders.Select(f => f.Path),
-                QualityProfiles = profiles.Select(p => p.Name.Trim()),
-            });
-        }
+        try { return Ok(await connections.GetSonarrOptionsAsync(ct)); }
         catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException)
         {
             return Problem($"Could not read from Sonarr: {ex.Message}", statusCode: 502);
@@ -73,7 +63,7 @@ public class SettingsController(
     [HttpPost("test-omdb")]
     public async Task<IActionResult> TestOmdb(OmdbTestRequest request, CancellationToken ct)
     {
-        var result = await omdb.TestKeyAsync(request.OmdbApiKey, ct);
+        var result = await connections.TestOmdbAsync(request.OmdbApiKey, ct);
         return Ok(new { ok = result.Ok, message = result.Message });
     }
 }

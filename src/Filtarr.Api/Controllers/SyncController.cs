@@ -1,11 +1,12 @@
-using Filtarr.Api.Services;
+using Filtarr.Core.Exceptions;
+using Filtarr.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Filtarr.Api.Controllers;
 
 [ApiController]
 [Route("api")]
-public class SyncController(ISyncService sync, ISyncRunStore runs) : ControllerBase
+public class SyncController(ISyncService sync) : ControllerBase
 {
     [HttpGet("preview")]
     public async Task<IActionResult> Preview(int? seriesId, CancellationToken ct)
@@ -22,5 +23,5 @@ public class SyncController(ISyncService sync, ISyncRunStore runs) : ControllerB
     }
 
     [HttpGet("runs")]
-    public async Task<IActionResult> Runs(CancellationToken ct) => Ok(await runs.RecentAsync(50, ct));
+    public async Task<IActionResult> Runs(CancellationToken ct) => Ok(await sync.GetRecentRunsAsync(50, ct));
 }
