@@ -123,7 +123,7 @@ export default function ListPage() {
               ` (${previously} more skipped because Filtarr monitored them before)`}
             . This is a preview, so nothing was changed.
           </p>
-          <table>
+          <table className="stack">
             <thead>
               <tr>
                 <th>Series</th>
@@ -137,7 +137,7 @@ export default function ListPage() {
             <tbody>
               {preview.matches.map((m) => (
                 <tr key={m.episodeId} className={skipReason(m) ? "dim" : ""}>
-                  <td>
+                  <td data-label="Series">
                     {m.seriesImdbId ? (
                       <a href={seriesPath(m.seriesImdbId)} title="Open in Filtarr">
                         {m.series}
@@ -146,11 +146,11 @@ export default function ListPage() {
                       m.series
                     )}
                   </td>
-                  <td>
+                  <td data-label="Episode">
                     S{String(m.season).padStart(2, "0")}E
                     {String(m.number).padStart(2, "0")}
                   </td>
-                  <td>
+                  <td data-label="Title">
                     {imdbEpisodeUrl(m) ? (
                       <a href={imdbEpisodeUrl(m)!} target="_blank" rel="noreferrer" title="Open on IMDb">
                         {m.title || "(untitled)"}
@@ -159,9 +159,9 @@ export default function ListPage() {
                       m.title
                     )}
                   </td>
-                  <td>{fmtDate(m.airDate)}</td>
-                  <td>{m.filter}</td>
-                  <td>
+                  <td data-label="Aired">{fmtDate(m.airDate)}</td>
+                  <td data-label="Matched by">{m.filter}</td>
+                  <td data-label="Status">
                     {skipReason(m) ??
                       (m.hasFile
                         ? "will monitor (has file)"
